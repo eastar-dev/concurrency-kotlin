@@ -1,18 +1,25 @@
 package co.starcarr.rssreader
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.ProgressBar
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import co.starcarr.rssreader.adapter.ArticleAdapter
 import co.starcarr.rssreader.model.Article
 import co.starcarr.rssreader.model.Feed
-import kotlinx.coroutines.*
-import javax.xml.parsers.DocumentBuilderFactory
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.newFixedThreadPoolContext
 import org.w3c.dom.Element
 import org.w3c.dom.Node
+import javax.xml.parsers.DocumentBuilderFactory
 
 class MainActivity : AppCompatActivity() {
 
@@ -43,7 +50,7 @@ class MainActivity : AppCompatActivity() {
         asyncLoadNews()
     }
 
-    private fun asyncLoadNews() = GlobalScope.launch {
+    private fun asyncLoadNews() = lifecycleScope.launch {
         val requests = mutableListOf<Deferred<List<Article>>>()
 
         feeds.mapTo(requests) {
@@ -74,11 +81,14 @@ class MainActivity : AppCompatActivity() {
             findViewById<ProgressBar>(R.id.progressBar).visibility = View.GONE
             viewAdapter.add(articles)
         }
+
     }
 
 
-    private fun asyncFetchArticles(feed: Feed,
-                                   dispatcher: CoroutineDispatcher) = GlobalScope.async(dispatcher) {
+    private fun asyncFetchArticles(
+        feed: Feed,
+        dispatcher: CoroutineDispatcher
+    ) = lifecycleScope.async(dispatcher) {
         delay(1500)
         val builder = factory.newDocumentBuilder()
         val xml = builder.parse(feed.url)
@@ -98,7 +108,8 @@ class MainActivity : AppCompatActivity() {
                     .textContent
 
                 if (!summary.startsWith("<div")
-                    && summary.contains("<div")) {
+                    && summary.contains("<div")
+                ) {
                     summary = summary.substring(0, summary.indexOf("<div"))
                 }
 
