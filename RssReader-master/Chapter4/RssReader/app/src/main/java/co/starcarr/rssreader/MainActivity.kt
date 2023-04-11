@@ -77,7 +77,7 @@ class MainActivity : AppCompatActivity() {
 
         val obtained = requests.size - failed
 
-        launch(Dispatchers.Main) {
+        launch(Dispatchers.Main + lifecycleScope.coroutineContext) {
             findViewById<ProgressBar>(R.id.progressBar).visibility = View.GONE
             viewAdapter.add(articles)
         }
